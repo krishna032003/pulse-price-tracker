@@ -3,7 +3,7 @@ services:
     name: pulse-price-tracker-api
     runtime: node
     rootDir: .
-    buildCommand: npm ci && npx playwright install --with-deps chromium
+    buildCommand: npm ci && npx playwright install chromium
     startCommand: npm run start --workspace server
     healthCheckPath: /health
     envVars:
