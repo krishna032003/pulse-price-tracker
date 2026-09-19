@@ -43,7 +43,7 @@ A visible Chromium window opens on the real INE mock store, moves over the revea
 
 1. Push this repository to public GitHub.
 2. In Supabase, run the schema. Keep the service-role key private.
-3. Create a Render Blueprint from the repo. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `WEB_ORIGIN` (your future Vercel URL). Copy the generated `CRON_SECRET` for cron-job.org.
+3. Create a Render Blueprint from the repo. Its build installs Chromium for Playwright. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `WEB_ORIGIN` (your future Vercel URL). Copy the generated `CRON_SECRET` for cron-job.org.
 4. Import the repository into Vercel, set its root directory to `web`, and add `VITE_API_BASE_URL` with the Render API URL. Redeploy Render once with the final Vercel URL in `WEB_ORIGIN`.
 5. Set up the two-hour cron request above and add at least one product through the live UI.
 
