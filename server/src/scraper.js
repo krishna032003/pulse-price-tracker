@@ -5,9 +5,14 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const retryable = error => /timeout|net::|ECONN|HTTP 5|Target page|price block/i.test(String(error.message));
 
 function parseMoney(value) {
-  // The storefront deliberately varies separators and digits. Keep only a validated numeric price.
-  const normalized = value.normalize("NFKC").replace(/[\s,₹Rs./-]/gi, "");
-  const amount = Number(normalized);
+  // The storefront deliberately varies separators, adds zero-width characters,
+  // and sometimes shows a locale-specific decimal suffix (for example 35.503,00).
+  const text = value.normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, "");
+  const match = text.match(/\d[\d.,]*/);
+  if (!match) throw new Error(`Invalid price text: ${value}`);
+  let numeric = match[0];
+  if (/[,.]\d{2}$/.test(numeric)) numeric = numeric.slice(0, -3);
+  const amount = Number(numeric.replace(/[,.]/g, ""));
   if (!Number.isFinite(amount) || amount <= 0 || amount > 10_000_000) throw new Error(`Invalid price text: ${value}`);
   return amount;
 }
