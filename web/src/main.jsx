@@ -15,15 +15,23 @@ const request = async (path, options) => {
   return body;
 };
 
-const money = value => value == null
-  ? "Waiting for first scrape"
-  : new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
+const money = value => {
+  if (value == null) return "Waiting for first scrape";
+  const num = Number(value);
+  if (!Number.isFinite(num) || num <= 50) return "Waiting for first scrape";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0
+  }).format(num);
+};
 
 const dateTime = value => new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
 
 function Sparkline({ history }) {
-  if (history.length < 2) return <p className="muted">The first successful scrape will start the price chart.</p>;
-  const prices = history.map(row => Number(row.price));
+  const validHistory = history.filter(h => Number(h.price) > 50);
+  if (validHistory.length < 2) return <p className="muted">The first successful scrape will start the price chart.</p>;
+  const prices = validHistory.map(row => Number(row.price));
   const min = Math.min(...prices);
   const max = Math.max(...prices);
   const span = max - min || 1;
@@ -72,7 +80,7 @@ function ProductDetail({ selected, onBack }) {
   if (error) {
     return (
       <section className="panel">
-        <button className="link" onClick={onBack}>â† Back</button>
+        <button className="link" onClick={onBack}>{"\u2190 Back"}</button>
         <p className="error">{error}</p>
       </section>
     );
@@ -84,14 +92,14 @@ function ProductDetail({ selected, onBack }) {
   return (
     <section className="detail">
       <div className="detail-top-nav">
-        <button className="link" onClick={onBack}>â† All tracked products</button>
+        <button className="link" onClick={onBack}>{"\u2190 All tracked products"}</button>
         <button className="scrape-btn" disabled={scraping} onClick={handleScrapeNow}>
-          {scraping ? "âš¡ Scraping live..." : "âš¡ Scrape now"}
+          {scraping ? "\u26A1 Scraping live..." : "\u26A1 Scrape now"}
         </button>
       </div>
 
       <h2>{product.name}</h2>
-      <p className="muted">{product.brand} Â· {product.category} Â· {product.sku}</p>
+      <p className="muted">{product.brand} {"\u00B7"} {product.category} {"\u00B7"} {product.sku}</p>
 
       {scrapeNotice && <p className="notice">{scrapeNotice}</p>}
 
@@ -167,7 +175,6 @@ function App() {
       setMatches([]);
       setMessage("Product added! Initial scrape started in background...");
       load();
-      // Auto-poll so the card updates from 'Pending' to price without manual reload
       setTimeout(load, 3000);
       setTimeout(load, 7000);
       setTimeout(load, 12000);
@@ -232,7 +239,7 @@ function App() {
               <div className="result" key={item.id}>
                 <div>
                   <strong>{item.name}</strong>
-                  <small>{item.brand} Â· {item.category}</small>
+                  <small>{item.brand} {"\u00B7"} {item.category}</small>
                 </div>
                 <button disabled={trackedIds.has(item.id)} onClick={() => track(item.id)}>
                   {trackedIds.has(item.id) ? "Tracking" : "Track"}
@@ -271,16 +278,18 @@ function App() {
                   </span>
                 </div>
                 <h3>{product.name}</h3>
-                <p>{product.brand} Â· {product.sku}</p>
+                <p>{product.brand} {"\u00B7"} {product.sku}</p>
                 <strong>{money(product.latest?.price)}</strong>
-                {product.latest && <small>Last checked {dateTime(product.latest.scraped_at)}</small>}
+                {product.latest && product.latest.price > 50 && (
+                  <small>Last checked {dateTime(product.latest.scraped_at)}</small>
+                )}
                 <div className="card-footer">
                   <button
                     className="scrape-btn card-scrape-btn"
                     disabled={isScraping}
                     onClick={e => handleCardScrape(e, product)}
                   >
-                    {isScraping ? "âš¡ Scraping..." : "âš¡ Scrape now"}
+                    {isScraping ? "\u26A1 Scraping..." : "\u26A1 Scrape now"}
                   </button>
                 </div>
               </div>
