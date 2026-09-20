@@ -31,7 +31,15 @@ async function dismissCookieOverlay(page) {
     .catch(() => false);
   if (!appeared) return;
 
-  await cookies.click();
+  const box = await cookies.boundingBox();
+  if (!box) throw new Error("Cookie-consent button has no visible bounds");
+  // Use a real pointer movement/click because the demo checks trusted input
+  // before it persists consent in a fresh browser context.
+  await page.mouse.move(Math.max(10, box.x - 80), Math.max(10, box.y - 30));
+  await delay(180);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await delay(220);
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await page.locator(".cookie-overlay").waitFor({ state: "hidden", timeout: 5_000 });
 }
 
