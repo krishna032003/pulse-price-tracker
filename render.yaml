@@ -3,7 +3,7 @@ services:
     name: pulse-price-tracker-api
     runtime: node
     rootDir: .
-    buildCommand: npm ci && npx playwright install chromium
+    buildCommand: npm ci && PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium
     startCommand: npm run start --workspace server
     healthCheckPath: /health
     envVars:
@@ -17,3 +17,5 @@ services:
         generateValue: true
       - key: WEB_ORIGIN
         sync: false
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: "0"
