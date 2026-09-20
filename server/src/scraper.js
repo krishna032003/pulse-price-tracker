@@ -24,7 +24,19 @@ function parseStock(value) {
   return Number(match[1]);
 }
 
+async function dismissCookieOverlay(page) {
+  const cookies = page.getByRole("button", { name: /accept cookies/i });
+  const appeared = await cookies.waitFor({ state: "visible", timeout: 4_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!appeared) return;
+
+  await cookies.click();
+  await page.locator(".cookie-overlay").waitFor({ state: "hidden", timeout: 5_000 });
+}
+
 async function revealPrice(page) {
+  await dismissCookieOverlay(page);
   const button = page.getByRole("button", { name: /reveal price/i });
   await button.waitFor({ state: "visible", timeout: 12_000 });
   const box = await button.boundingBox();
@@ -44,7 +56,9 @@ async function revealPrice(page) {
     );
     await delay(95);
   }
-  await button.hover();
+  // The consent banner is sometimes inserted just after initial rendering.
+  // Check once more before waiting for the button to become interactive.
+  await dismissCookieOverlay(page);
   await delay(900);
   await page.waitForFunction(element => !element.disabled, await button.elementHandle(), { timeout: 10_000 });
   await button.click();
@@ -72,11 +86,7 @@ export async function scrapeCatalogProduct(catalogId, { headed = false, onRetry 
       const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
       page.setDefaultTimeout(20_000);
       await page.goto(`${config.storeBaseUrl}/product/${catalogId}`, { waitUntil: "domcontentloaded", timeout: 25_000 });
-      const cookies = page.getByRole("button", { name: /accept cookies/i });
-      if (await cookies.isVisible().catch(() => false)) {
-        await cookies.click({ force: true });
-        await page.locator(".cookie-overlay").waitFor({ state: "hidden", timeout: 5_000 }).catch(() => undefined);
-      }
+      await page.waitForLoadState("networkidle", { timeout: 7_000 }).catch(() => undefined);
       await revealPrice(page);
       const quote = await readQuote(page);
       await browser.close();
