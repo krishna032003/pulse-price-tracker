@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
 
-const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+const API = import.meta.env.VITE_API_BASE_URL ||
+  (window.location.hostname === "localhost"
+    ? "http://localhost:3001"
+    : "https://pulse-price-tracker-service.onrender.com");
 const request = async (path, options) => { const response = await fetch(`${API}${path}`, options); const body = await response.json(); if (!response.ok) throw new Error(body.error || "Request failed"); return body; };
 const money = value => value == null ? "Waiting for first scrape" : new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
 const dateTime = value => new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
