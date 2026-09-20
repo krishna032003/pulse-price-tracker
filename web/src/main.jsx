@@ -28,6 +28,27 @@ const money = value => {
 
 const dateTime = value => new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
 
+function BoltIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline-block", verticalAlign: "-1px", marginRight: "5px" }}>
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+    </svg>
+  );
+}
+
+function ArrowLeftIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "-2px", marginRight: "6px" }}>
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </svg>
+  );
+}
+
+function Dot() {
+  return <span style={{ opacity: 0.45, margin: "0 6px" }}>&bull;</span>;
+}
+
 function Sparkline({ history }) {
   const validHistory = history.filter(h => Number(h.price) > 50);
   if (validHistory.length < 2) return <p className="muted">The first successful scrape will start the price chart.</p>;
@@ -80,7 +101,7 @@ function ProductDetail({ selected, onBack }) {
   if (error) {
     return (
       <section className="panel">
-        <button className="link" onClick={onBack}>{"\u2190 Back"}</button>
+        <button className="link" onClick={onBack}><ArrowLeftIcon />Back</button>
         <p className="error">{error}</p>
       </section>
     );
@@ -89,29 +110,30 @@ function ProductDetail({ selected, onBack }) {
   if (!detail) return <section className="panel">Loading history...</section>;
 
   const { product, history, logs } = detail;
+  const displayHistory = history.filter(h => Number(h.price) > 50);
   return (
     <section className="detail">
       <div className="detail-top-nav">
-        <button className="link" onClick={onBack}>{"\u2190 All tracked products"}</button>
+        <button className="link" onClick={onBack}><ArrowLeftIcon />All tracked products</button>
         <button className="scrape-btn" disabled={scraping} onClick={handleScrapeNow}>
-          {scraping ? "\u26A1 Scraping live..." : "\u26A1 Scrape now"}
+          <BoltIcon />{scraping ? "Scraping live..." : "Scrape now"}
         </button>
       </div>
 
       <h2>{product.name}</h2>
-      <p className="muted">{product.brand} {"\u00B7"} {product.category} {"\u00B7"} {product.sku}</p>
+      <p className="muted">{product.brand}<Dot />{product.category}<Dot />{product.sku}</p>
 
       {scrapeNotice && <p className="notice">{scrapeNotice}</p>}
 
       <div className="panel">
         <h3>Price history</h3>
-        <Sparkline history={history} />
+        <Sparkline history={displayHistory} />
         <table>
           <thead>
             <tr><th>Captured</th><th>Price</th><th>Stock</th></tr>
           </thead>
           <tbody>
-            {history.slice().reverse().map(row => (
+            {displayHistory.slice().reverse().map(row => (
               <tr key={row.id}>
                 <td>{dateTime(row.scraped_at)}</td>
                 <td>{money(row.price)}</td>
@@ -239,7 +261,7 @@ function App() {
               <div className="result" key={item.id}>
                 <div>
                   <strong>{item.name}</strong>
-                  <small>{item.brand} {"\u00B7"} {item.category}</small>
+                  <small>{item.brand}<Dot />{item.category}</small>
                 </div>
                 <button disabled={trackedIds.has(item.id)} onClick={() => track(item.id)}>
                   {trackedIds.has(item.id) ? "Tracking" : "Track"}
@@ -260,6 +282,7 @@ function App() {
         <div className="cards">
           {products.map(product => {
             const isScraping = scrapingIds.has(product.id);
+            const hasValidPrice = product.latest && Number(product.latest.price) > 50;
             return (
               <div
                 className="card"
@@ -278,9 +301,9 @@ function App() {
                   </span>
                 </div>
                 <h3>{product.name}</h3>
-                <p>{product.brand} {"\u00B7"} {product.sku}</p>
-                <strong>{money(product.latest?.price)}</strong>
-                {product.latest && product.latest.price > 50 && (
+                <p>{product.brand}<Dot />{product.sku}</p>
+                <strong>{money(hasValidPrice ? product.latest.price : null)}</strong>
+                {hasValidPrice && (
                   <small>Last checked {dateTime(product.latest.scraped_at)}</small>
                 )}
                 <div className="card-footer">
@@ -289,7 +312,7 @@ function App() {
                     disabled={isScraping}
                     onClick={e => handleCardScrape(e, product)}
                   >
-                    {isScraping ? "\u26A1 Scraping..." : "\u26A1 Scrape now"}
+                    <BoltIcon />{isScraping ? "Scraping..." : "Scrape now"}
                   </button>
                 </div>
               </div>
