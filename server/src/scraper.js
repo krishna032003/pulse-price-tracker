@@ -31,11 +31,22 @@ async function revealPrice(page) {
   if (!box) throw new Error("Reveal-price button has no visible bounds");
 
   // The mock store intentionally expects genuine movement and a short hover before revealing price.
-  for (let step = 0; step < 10; step += 1) {
-    await page.mouse.move(box.x + 8 + step * 4, box.y + 8 + (step % 3) * 3);
-    await delay(85);
+  const targetX = box.x + box.width / 2;
+  const targetY = box.y + box.height / 2;
+  const startX = Math.max(20, targetX - 320);
+  const startY = Math.max(20, targetY - 180);
+  await page.mouse.move(startX, startY);
+  for (let step = 1; step <= 16; step += 1) {
+    const progress = step / 16;
+    await page.mouse.move(
+      startX + (targetX - startX) * progress,
+      startY + (targetY - startY) * progress
+    );
+    await delay(95);
   }
-  await delay(650);
+  await button.hover();
+  await delay(900);
+  await page.waitForFunction(element => !element.disabled, await button.elementHandle(), { timeout: 10_000 });
   await button.click();
   await page.locator(".price-success").waitFor({ state: "visible", timeout: 18_000 });
 }
@@ -62,7 +73,10 @@ export async function scrapeCatalogProduct(catalogId, { headed = false, onRetry 
       page.setDefaultTimeout(20_000);
       await page.goto(`${config.storeBaseUrl}/product/${catalogId}`, { waitUntil: "domcontentloaded", timeout: 25_000 });
       const cookies = page.getByRole("button", { name: /accept cookies/i });
-      if (await cookies.isVisible().catch(() => false)) await cookies.click();
+      if (await cookies.isVisible().catch(() => false)) {
+        await cookies.click({ force: true });
+        await page.locator(".cookie-overlay").waitFor({ state: "hidden", timeout: 5_000 }).catch(() => undefined);
+      }
       await revealPrice(page);
       const quote = await readQuote(page);
       await browser.close();
