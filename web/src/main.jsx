@@ -28,6 +28,15 @@ const money = value => {
 
 const dateTime = value => new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
 
+const cleanLogDetail = text => {
+  if (!text || typeof text !== "string") return "";
+  return text
+    .replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, "")
+    .replace(/\[(?:2m|22m|\d+m)/g, "")
+    .trim();
+};
+
+
 function BoltIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline-block", verticalAlign: "-1px", marginRight: "5px" }}>
@@ -123,7 +132,7 @@ function ProductDetail({ selected, onBack }) {
       <h2>{product.name}</h2>
       <p className="muted">{product.brand}<Dot />{product.category}<Dot />{product.sku}</p>
 
-      {scrapeNotice && <p className="notice">{scrapeNotice}</p>}
+      {scrapeNotice && <p className="notice">{cleanLogDetail(scrapeNotice)}</p>}
 
       <div className="panel">
         <h3>Price history</h3>
@@ -155,7 +164,7 @@ function ProductDetail({ selected, onBack }) {
               <tr key={log.id}>
                 <td>{dateTime(log.created_at)}</td>
                 <td><span className={`status ${log.status}`}>{log.status}</span></td>
-                <td>{log.message}</td>
+                <td>{cleanLogDetail(log.message)}</td>
               </tr>
             ))}
           </tbody>
@@ -272,7 +281,7 @@ function App() {
         </div>
       </section>
 
-      {message && <p className="notice">{message}</p>}
+      {message && <p className="notice">{cleanLogDetail(message)}</p>}
 
       <section>
         <div className="section-heading">
